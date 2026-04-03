@@ -1,10 +1,23 @@
-export type PrimalMockWsScenario = 'success' | 'notice_error' | 'eose_only' | 'binary_frame';
+export type PrimalMockWsScenario =
+	| 'success'
+	| 'notice_error'
+	| 'eose_only'
+	| 'binary_frame'
+	| 'invalid_json_message'
+	| 'json_object_message'
+	| 'connect_never';
 
 /**
  * Test double for outbound Primal WebSocket (global `WebSocket` in unit/integration tests).
  */
 export class MockPrimalWebSocket {
 	static scenario: PrimalMockWsScenario = 'success';
+
+	/** When set, non-undefined return overrides {@link scenario} for that URL. */
+	static scenarioByUrl: ((url: string) => PrimalMockWsScenario | undefined) | null = null;
+
+	/** Raw strings passed to `send()` (Primal wire JSON), most recent last. */
+	static recordedSends: string[] = [];
 
 	static instances: MockPrimalWebSocket[] = [];
 	readonly url: string;
@@ -17,13 +30,22 @@ export class MockPrimalWebSocket {
 		this.url = typeof url === 'string' ? url : url.toString();
 		MockPrimalWebSocket.instances.push(this);
 		queueMicrotask(() => {
+			if (this.effectiveScenario() === 'connect_never') {
+				return;
+			}
 			this.onopen?.();
 		});
 	}
 
-	send(_data: string): void {
+	private effectiveScenario(): PrimalMockWsScenario {
+		const mapped = MockPrimalWebSocket.scenarioByUrl?.(this.url);
+		return mapped ?? MockPrimalWebSocket.scenario;
+	}
+
+	send(data: string): void {
+		MockPrimalWebSocket.recordedSends.push(data);
 		queueMicrotask(() => {
-			const scenario = MockPrimalWebSocket.scenario;
+			const scenario = this.effectiveScenario();
 			if (scenario === 'binary_frame') {
 				this.onmessage?.({ data: new Uint8Array([1, 2, 3]) } as MessageEvent);
 				return;
@@ -34,6 +56,14 @@ export class MockPrimalWebSocket {
 			}
 			if (scenario === 'eose_only') {
 				this.onmessage?.({ data: JSON.stringify(['EOSE', 'sub']) } as MessageEvent);
+				return;
+			}
+			if (scenario === 'invalid_json_message') {
+				this.onmessage?.({ data: '{ not json' } as MessageEvent);
+				return;
+			}
+			if (scenario === 'json_object_message') {
+				this.onmessage?.({ data: JSON.stringify({ not: 'array' }) } as MessageEvent);
 				return;
 			}
 

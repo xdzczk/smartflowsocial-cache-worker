@@ -8,11 +8,14 @@ import { MockPrimalWebSocket } from './mock-primal-websocket';
 describe('Primal cache worker (integration)', () => {
 	beforeEach(() => {
 		MockPrimalWebSocket.instances = [];
+		MockPrimalWebSocket.recordedSends = [];
 		MockPrimalWebSocket.scenario = 'success';
+		MockPrimalWebSocket.scenarioByUrl = null;
 		vi.stubGlobal('WebSocket', MockPrimalWebSocket);
 	});
 
 	afterEach(() => {
+		MockPrimalWebSocket.scenarioByUrl = null;
 		vi.unstubAllGlobals();
 	});
 
