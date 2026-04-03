@@ -1,8 +1,13 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "primal-caching-websocket-worker"
-main = "src/index.js"
+name = "smartflowsocial-primal-cache-worker"
+main = "src/index.ts"
 compatibility_date = "2024-12-05"
-compatibility_flags = ["nodejs_compat"]
+
+# No Node.js built-ins required; smaller runtime surface without nodejs_compat.
+# Optional observability: bind Analytics Engine and write datapoints from the Worker.
+# [[analytics_engine_datasets]]
+# binding = "METRICS"
+# dataset = "<your_dataset_name>"
 
 # Workers Logs
 # Docs: https://developers.cloudflare.com/workers/observability/logs/workers-logs/
@@ -10,8 +15,6 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
-[build.upload]
-format = "service-worker"
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Worker, running it closer to your back-end infrastructure
 # rather than the end user may result in better performance.

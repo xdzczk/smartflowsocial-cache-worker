@@ -14,21 +14,21 @@ A Cloudflare Worker that acts as a proxy to Primal Cache WebSocket endpoints, pr
 
 ### Prerequisites
 
-- Node.js and npm installed
+- Node.js 20+ and [pnpm](https://pnpm.io/) installed
 - Cloudflare account
-- Wrangler CLI installed (`npm install -g wrangler`)
+- Wrangler (via devDependencies; or install globally with `pnpm add -g wrangler`)
 
 ### Deploy to Cloudflare Workers
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Login to Cloudflare
-wrangler login
+pnpm exec wrangler login
 
 # Deploy the worker
-npm run deploy
+pnpm run deploy
 ```
 
 ## Usage
@@ -39,10 +39,10 @@ Send a POST request to your worker URL with the following JSON body:
 
 ```json
 {
-  "requestType": "request_type_here",
-  "params": {
-    // request-specific parameters
-  }
+	"requestType": "request_type_here",
+	"params": {
+		// request-specific parameters
+	}
 }
 ```
 
@@ -64,16 +64,16 @@ curl -X POST https://your-worker.workers.dev \
 
 ```javascript
 const response = await fetch('https://your-worker.workers.dev', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    requestType: 'user_profile',
-    params: {
-      pubkey: '64-hex-pubkey-here'
-    }
-  })
+	method: 'POST',
+	headers: {
+		'Content-Type': 'application/json',
+	},
+	body: JSON.stringify({
+		requestType: 'user_profile',
+		params: {
+			pubkey: '64-hex-pubkey-here',
+		},
+	}),
 });
 
 const data = await response.json();
@@ -85,498 +85,543 @@ console.log(data);
 ### Feed & Content Discovery
 
 #### User Feed
+
 ```json
 {
-  "requestType": "feed",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 20,
-    "since": 0,
-    "until": 1234567890,
-    "offset": 0,
-    "user_pubkey": "64-hex-pubkey",
-    "notes": "follows"
-  }
+	"requestType": "feed",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 20,
+		"since": 0,
+		"until": 1234567890,
+		"offset": 0,
+		"user_pubkey": "64-hex-pubkey",
+		"notes": "follows"
+	}
 }
 ```
 
 #### Long-form Content Feed
+
 ```json
 {
-  "requestType": "long_form_content_feed",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 20,
-    "since": 0,
-    "until": 1234567890,
-    "offset": 0,
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "long_form_content_feed",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 20,
+		"since": 0,
+		"until": 1234567890,
+		"offset": 0,
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Zaps Feed
+
 ```json
 {
-  "requestType": "zaps_feed",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 20,
-    "since": 0,
-    "until": 1234567890,
-    "offset": 0
-  }
+	"requestType": "zaps_feed",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 20,
+		"since": 0,
+		"until": 1234567890,
+		"offset": 0
+	}
 }
 ```
 
 #### Media Feed
+
 ```json
 {
-  "requestType": "media_feed",
-  "params": {
-    "category": "",
-    "since": 0,
-    "until": 1234567890,
-    "limit": 20,
-    "offset": 0,
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "media_feed",
+	"params": {
+		"category": "",
+		"since": 0,
+		"until": 1234567890,
+		"limit": 20,
+		"offset": 0,
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 ### Thread & Conversations
 
 #### Thread View
+
 ```json
 {
-  "requestType": "thread_view",
-  "params": {
-    "event_id": "64-hex-event-id",
-    "limit": 20,
-    "since": 0,
-    "until": 1234567890,
-    "offset": 0,
-    "user_pubkey": "64-hex-pubkey",
-    "usepgfuncs": true,
-    "apply_humaness_check": false
-  }
+	"requestType": "thread_view",
+	"params": {
+		"event_id": "64-hex-event-id",
+		"limit": 20,
+		"since": 0,
+		"until": 1234567890,
+		"offset": 0,
+		"user_pubkey": "64-hex-pubkey",
+		"usepgfuncs": true,
+		"apply_humaness_check": false
+	}
 }
 ```
 
 #### Long-form Content Thread
+
 ```json
 {
-  "requestType": "long_form_content_thread_view",
-  "params": {
-    "event_id": "64-hex-event-id",
-    "limit": 20,
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "long_form_content_thread_view",
+	"params": {
+		"event_id": "64-hex-event-id",
+		"limit": 20,
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 ### User Profile & Social Graph
 
 #### User Profile
+
 ```json
 {
-  "requestType": "user_profile",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "user_profile",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Batch User Info
+
 ```json
 {
-  "requestType": "user_infos",
-  "params": {
-    "pubkeys": ["64-hex-pubkey-1", "64-hex-pubkey-2"],
-    "usepgfuncs": false,
-    "apply_humaness_check": false
-  }
+	"requestType": "user_infos",
+	"params": {
+		"pubkeys": ["64-hex-pubkey-1", "64-hex-pubkey-2"],
+		"usepgfuncs": false,
+		"apply_humaness_check": false
+	}
 }
 ```
 
 #### User Followers
+
 ```json
 {
-  "requestType": "user_followers",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 200
-  }
+	"requestType": "user_followers",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 200
+	}
 }
 ```
 
 #### Mutual Follows
+
 ```json
 {
-  "requestType": "mutual_follows",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "mutual_follows",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Contact List (Follows)
+
 ```json
 {
-  "requestType": "contact_list",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "extended_response": true
-  }
+	"requestType": "contact_list",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"extended_response": true
+	}
 }
 ```
 
 #### Is User Following
+
 ```json
 {
-  "requestType": "is_user_following",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "is_user_following",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### User Follower Counts
+
 ```json
 {
-  "requestType": "user_follower_counts",
-  "params": {
-    "pubkeys": ["64-hex-pubkey-1", "64-hex-pubkey-2"]
-  }
+	"requestType": "user_follower_counts",
+	"params": {
+		"pubkeys": ["64-hex-pubkey-1", "64-hex-pubkey-2"]
+	}
 }
 ```
 
 #### User Scores (Reputation)
+
 ```json
 {
-  "requestType": "user_scores",
-  "params": {
-    "pubkeys": ["64-hex-pubkey-1", "64-hex-pubkey-2"]
-  }
+	"requestType": "user_scores",
+	"params": {
+		"pubkeys": ["64-hex-pubkey-1", "64-hex-pubkey-2"]
+	}
 }
 ```
 
 ### Events & Interactions
 
 #### Fetch Events by IDs
+
 ```json
 {
-  "requestType": "events",
-  "params": {
-    "event_ids": ["64-hex-id-1", "64-hex-id-2"]
-  }
+	"requestType": "events",
+	"params": {
+		"event_ids": ["64-hex-id-1", "64-hex-id-2"]
+	}
 }
 ```
 
 #### Event Stats
+
 ```json
 {
-  "requestType": "event_stats",
-  "params": {
-    "event_id": "64-hex-event-id"
-  }
+	"requestType": "event_stats",
+	"params": {
+		"event_id": "64-hex-event-id"
+	}
 }
 ```
 
 #### Event Actions (Reposts, Likes, Replies, Zaps)
+
 ```json
 {
-  "requestType": "event_actions",
-  "params": {
-    "event_id": "64-hex-event-id",
-    "kind": 6,
-    "limit": 100,
-    "offset": 0
-  }
+	"requestType": "event_actions",
+	"params": {
+		"event_id": "64-hex-event-id",
+		"kind": 6,
+		"limit": 100,
+		"offset": 0
+	}
 }
 ```
+
 Note: `kind` can be 6 (reposts), 7 (likes), 1 (replies), or 9735 (zaps)
 
 #### Event Zaps by Amount
+
 ```json
 {
-  "requestType": "event_zaps_by_satszapped",
-  "params": {
-    "event_id": "64-hex-event-id"
-  }
+	"requestType": "event_zaps_by_satszapped",
+	"params": {
+		"event_id": "64-hex-event-id"
+	}
 }
 ```
 
 ### Zaps (Lightning Payments)
 
 #### User's Received Zaps
+
 ```json
 {
-  "requestType": "user_zaps",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 100
-  }
+	"requestType": "user_zaps",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 100
+	}
 }
 ```
 
 #### User's Sent Zaps
+
 ```json
 {
-  "requestType": "user_zaps_sent",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 100
-  }
+	"requestType": "user_zaps_sent",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 100
+	}
 }
 ```
 
 ### Direct Messages
 
 #### Get DM Contacts List
+
 ```json
 {
-  "requestType": "get_directmsg_contacts",
-  "params": {
-    "receiver": "64-hex-pubkey",
-    "limit": 100
-  }
+	"requestType": "get_directmsg_contacts",
+	"params": {
+		"receiver": "64-hex-pubkey",
+		"limit": 100
+	}
 }
 ```
 
 #### Get DMs Between Users
+
 ```json
 {
-  "requestType": "get_directmsgs",
-  "params": {
-    "receiver": "64-hex-pubkey",
-    "sender": "64-hex-pubkey",
-    "limit": 100,
-    "since": 0,
-    "until": 1234567890
-  }
+	"requestType": "get_directmsgs",
+	"params": {
+		"receiver": "64-hex-pubkey",
+		"sender": "64-hex-pubkey",
+		"limit": 100,
+		"since": 0,
+		"until": 1234567890
+	}
 }
 ```
 
 #### Get Unread DM Count
+
 ```json
 {
-  "requestType": "get_directmsg_count",
-  "params": {
-    "receiver": "64-hex-pubkey",
-    "sender": "64-hex-pubkey"
-  }
+	"requestType": "get_directmsg_count",
+	"params": {
+		"receiver": "64-hex-pubkey",
+		"sender": "64-hex-pubkey"
+	}
 }
 ```
 
 ### Search & Discovery
 
 #### Text Search
+
 ```json
 {
-  "requestType": "search",
-  "params": {
-    "query": "search terms",
-    "limit": 20,
-    "offset": 0,
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "search",
+	"params": {
+		"query": "search terms",
+		"limit": 20,
+		"offset": 0,
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### User Search
+
 ```json
 {
-  "requestType": "user_search",
-  "params": {
-    "query": "username",
-    "limit": 10,
-    "pubkey": "64-hex-pubkey"
-  }
+	"requestType": "user_search",
+	"params": {
+		"query": "username",
+		"limit": 10,
+		"pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Explore Trending 24h
+
 ```json
 {
-  "requestType": "explore_global_trending_24h",
-  "params": {
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "explore_global_trending_24h",
+	"params": {
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Explore Most Zapped 4h
+
 ```json
 {
-  "requestType": "explore_global_mostzapped_4h",
-  "params": {
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "explore_global_mostzapped_4h",
+	"params": {
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Explore People
+
 ```json
 {
-  "requestType": "explore_people",
-  "params": {
-    "limit": 20,
-    "user_pubkey": "64-hex-pubkey"
-  }
+	"requestType": "explore_people",
+	"params": {
+		"limit": 20,
+		"user_pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Trending Hashtags
+
 ```json
 {
-  "requestType": "trending_hashtags",
-  "params": {
-    "created_after": 1234567890,
-    "curated": true
-  }
+	"requestType": "trending_hashtags",
+	"params": {
+		"created_after": 1234567890,
+		"curated": true
+	}
 }
 ```
 
 ### Content Moderation & Lists
 
 #### Mute List
+
 ```json
 {
-  "requestType": "mutelist",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "extended_response": true
-  }
+	"requestType": "mutelist",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"extended_response": true
+	}
 }
 ```
 
 #### Allow List
+
 ```json
 {
-  "requestType": "allowlist",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "extended_response": true
-  }
+	"requestType": "allowlist",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"extended_response": true
+	}
 }
 ```
 
 ### Bookmarks & Highlights
 
 #### Get Bookmarks
+
 ```json
 {
-  "requestType": "get_bookmarks",
-  "params": {
-    "pubkey": "64-hex-pubkey"
-  }
+	"requestType": "get_bookmarks",
+	"params": {
+		"pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Get Highlights
+
 ```json
 {
-  "requestType": "get_highlights",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 100,
-    "offset": 0
-  }
+	"requestType": "get_highlights",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 100,
+		"offset": 0
+	}
 }
 ```
 
 ### Network & Relays
 
 #### Network Stats
+
 ```json
 {
-  "requestType": "network_stats"
+	"requestType": "network_stats"
 }
 ```
+
 Note: No params required
 
 #### Nostr Stats
+
 ```json
 {
-  "requestType": "nostr_stats"
+	"requestType": "nostr_stats"
 }
 ```
+
 Note: No params required
 
 #### Get User's Relay List
+
 ```json
 {
-  "requestType": "get_user_relays",
-  "params": {
-    "pubkey": "64-hex-pubkey"
-  }
+	"requestType": "get_user_relays",
+	"params": {
+		"pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 #### Top Relays
+
 ```json
 {
-  "requestType": "relays",
-  "params": {
-    "limit": 20
-  }
+	"requestType": "relays",
+	"params": {
+		"limit": 20
+	}
 }
 ```
 
 ### Notifications
 
 #### Get Notifications
+
 ```json
 {
-  "requestType": "get_notifications",
-  "params": {
-    "pubkey": "64-hex-pubkey",
-    "limit": 100,
-    "since": 0,
-    "until": 1234567890
-  }
+	"requestType": "get_notifications",
+	"params": {
+		"pubkey": "64-hex-pubkey",
+		"limit": 100,
+		"since": 0,
+		"until": 1234567890
+	}
 }
 ```
 
 #### Notification Counts
+
 ```json
 {
-  "requestType": "get_notification_counts",
-  "params": {
-    "pubkey": "64-hex-pubkey"
-  }
+	"requestType": "get_notification_counts",
+	"params": {
+		"pubkey": "64-hex-pubkey"
+	}
 }
 ```
 
 ### Utility Functions
 
 #### Lightning Address Lookup
+
 ```json
 {
-  "requestType": "user_of_ln_address",
-  "params": {
-    "ln_address": "user@domain.com"
-  }
+	"requestType": "user_of_ln_address",
+	"params": {
+		"ln_address": "user@domain.com"
+	}
 }
 ```
 
 #### NIP-19 Decode
+
 ```json
 {
-  "requestType": "nip19_decode",
-  "params": {
-    "ids": ["npub1...", "note1..."]
-  }
+	"requestType": "nip19_decode",
+	"params": {
+		"ids": ["npub1...", "note1..."]
+	}
 }
 ```
 
 ## Complete List of Supported Request Types
 
 ### Feed & Content Discovery
+
 - `feed` - Main user feed
 - `long_form_content_feed` - Long-form content/articles feed
 - `zaps_feed` - Zaps feed
@@ -584,10 +629,12 @@ Note: No params required
 - `media_feed` - Media feed
 
 ### Thread & Conversations
+
 - `thread_view` - Thread view with parents and replies
 - `long_form_content_thread_view` - Long-form content thread
 
 ### User Profile & Social Graph
+
 - `user_profile` - User profile
 - `user_infos` - Batch user information
 - `user_followers` - User followers
@@ -602,6 +649,7 @@ Note: No params required
 - `user_profile_scored_media_thumbnails` - User's media thumbnails
 
 ### Events & Interactions
+
 - `events` - Fetch events by IDs
 - `event_stats` - Event statistics (likes, reposts, zaps, replies)
 - `event_actions` - Event actions (reposts, likes, replies, zaps)
@@ -612,17 +660,20 @@ Note: No params required
 - `enrich_feed_events` - Enrich feed events with metadata
 
 ### Zaps (Lightning Payments)
+
 - `user_zaps` - User's received zaps
 - `user_zaps_by_satszapped` - User's zaps sorted by amount
 - `user_zaps_sent` - User's sent zaps
 
 ### Direct Messages
+
 - `get_directmsg_contacts` - Get DM contacts list
 - `get_directmsgs` - Get DMs between users
 - `get_directmsg_count` - Get unread DM count
 - `reset_directmsg_count` - Reset DM count (mark as read)
 
 ### Search & Discovery
+
 - `search` - Text search
 - `user_search` - User search
 - `explore_global_trending_24h` - Trending content (24h)
@@ -637,6 +688,7 @@ Note: No params required
 - `trending_images` - Trending images
 
 ### Content Moderation & Lists
+
 - `mutelist` - User's mute list
 - `mutelists` - Multiple mute lists
 - `allowlist` - User's allow list
@@ -645,10 +697,12 @@ Note: No params required
 - `check_filterlist` - Check filterlist
 
 ### Bookmarks & Highlights
+
 - `get_bookmarks` - Get user's bookmarks
 - `get_highlights` - Get user's highlights
 
 ### DVM Feeds (Data Vending Machines)
+
 - `get_dvm_feeds_all` - All DVM feeds
 - `get_dvm_feeds` - Active DVM feeds
 - `get_featured_dvm_feeds` - Featured DVM feeds
@@ -657,6 +711,7 @@ Note: No params required
 - `get_dvm_feed_user_actions` - DVM feed user actions
 
 ### Relays & Network
+
 - `network_stats` - Network statistics
 - `nostr_stats` - Nostr statistics
 - `server_name` - Server name
@@ -665,17 +720,20 @@ Note: No params required
 - `relays` - Top relays
 
 ### Media & Blossom
+
 - `get_media_metadata` - Media metadata by URLs
 - `get_media_metadata_by_hash` - Media metadata by hash
 - `get_recommended_blossom_servers` - Recommended Blossom servers
 
 ### Notifications
+
 - `get_notifications` - Get notifications
 - `get_notification_counts` - Notification counts
 - `get_notifications_seen` - Last seen timestamp
 - `set_notifications_seen` - Set notifications as seen
 
 ### Utility Functions
+
 - `user_of_ln_address` - Lightning address lookup
 - `nip19_decode` - Decode NIP-19 identifiers
 - `replaceable_event` - Get replaceable event
@@ -683,6 +741,7 @@ Note: No params required
 - `parametrized_replaceable_events` - Batch parameterized replaceable events
 
 ### Membership/Premium Features
+
 - `membership_media_management_stats` - Media management stats
 - `membership_media_management_delete` - Delete media
 - `membership_content_backup` - Content backup
@@ -691,6 +750,7 @@ Note: No params required
 - `membership_premium_leaderboard` - Premium leaderboard
 
 ### Articles & Long-form
+
 - `articles_stats` - Article statistics
 - `drafts` - User's drafts
 - `top_article` - Top article by metric
@@ -715,21 +775,29 @@ The last message is always `["EOSE", "subscription-id"]` indicating "End Of Stor
 ### HTTP Status Codes
 
 - `200` - Success
-- `400` - Bad request (missing requestType)
+- `400` - Bad request (invalid JSON, validation / unknown `requestType`, etc.)
 - `405` - Method not allowed (only POST is accepted)
-- `500` - Server error (all WebSocket endpoints failed or invalid request type)
+- `413` - Request body larger than 256 KiB
+- `502` - Bad gateway (upstream Primal cache error, malformed upstream payload, or all endpoints failed with non-timeout errors)
+- `504` - Gateway timeout (connect or response timeout on every attempted endpoint)
+- `500` - Unexpected internal error
+
+Responses include an `X-Request-Id` header (echoed from the client `X-Request-Id` when valid, otherwise generated) for log correlation.
 
 ### Error Response Format
 
 ```json
 {
-  "error": "Error message here"
+	"error": "Error message here"
 }
 ```
+
+Supported Primal `requestType` values are maintained in `src/data/primal-request-types.json` (validated before any upstream WebSocket is opened).
 
 ## WebSocket Endpoints
 
 The worker automatically tries these Primal cache endpoints in order:
+
 1. `wss://primal.ytstr.com/v1`
 2. `wss://cache.smartflowsocial.com/v1`
 3. `wss://cache1.primal.net/v1`
@@ -740,9 +808,11 @@ If one fails, it automatically tries the next one with a 7-second timeout per en
 ## CORS Support
 
 The worker includes CORS headers allowing requests from any origin:
+
 - `Access-Control-Allow-Origin: *`
 - `Access-Control-Allow-Methods: GET, POST, OPTIONS`
-- `Access-Control-Allow-Headers: Content-Type`
+- `Access-Control-Allow-Headers: Content-Type, X-Request-Id`
+- `Access-Control-Expose-Headers: X-Request-Id`
 
 ## Development
 
@@ -750,20 +820,36 @@ The worker includes CORS headers allowing requests from any origin:
 
 ```bash
 # Run in development mode
-npm run dev
+pnpm run dev
 ```
 
 This will start a local server using Wrangler for testing.
+
+### Quality checks
+
+```bash
+pnpm run validate
+```
+
+Runs Prettier (check), ESLint, TypeScript, `cf-types:check`, and Vitest. After changing `wrangler.toml` or bindings, run `pnpm run cf-types` and commit `worker-configuration.d.ts` if it changes.
 
 ### Project Structure
 
 ```
 .
 ├── src/
-│   └── index.js          # Main worker code
-├── wrangler.toml         # Cloudflare Workers configuration
-├── package.json          # Node.js dependencies
-└── README.md            # This file
+│   ├── index.ts                 # Worker fetch handler
+│   ├── body-schema.ts           # Zod validation for POST JSON
+│   ├── http-error.ts            # Typed HTTP errors
+│   ├── request-types.ts         # Loads allowlist JSON
+│   └── data/
+│       └── primal-request-types.json   # Supported Primal requestType values
+├── test/                        # Vitest + @cloudflare/vitest-pool-workers
+├── worker-configuration.d.ts    # Generated: pnpm run cf-types
+├── wrangler.toml
+├── package.json
+├── CONTRIBUTING.md
+└── README.md
 ```
 
 ## License
@@ -772,7 +858,7 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Pull requests are welcome.
 
 ## Support
 

@@ -2,18 +2,46 @@
 	"name": "primal-caching-websocket-worker",
 	"version": "0.0.0",
 	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@10.27.0",
+	"engines": {
+		"node": ">=20.0.0"
+	},
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"test": "vitest"
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "eslint .",
+		"lint:ci": "eslint . --max-warnings 0",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"typecheck": "tsc --noEmit",
+		"cf-types": "wrangler types",
+		"cf-types:check": "wrangler types && git diff --exit-code worker-configuration.d.ts",
+		"validate": "pnpm run format:check && pnpm run lint:ci && pnpm run typecheck && pnpm run cf-types:check && pnpm run test"
 	},
-	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.5.2",
-		"vitest": "2.1.8",
-		"wrangler": "^3.60.3"
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"sharp",
+			"workerd"
+		]
 	},
 	"dependencies": {
-		"ws": "^8.18.0"
+		"zod": "^4.3.5"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.14.1",
+		"@eslint/js": "^9.39.2",
+		"eslint": "^9.39.2",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.0.0",
+		"prettier": "3.7.4",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.52.0",
+		"vitest": "4.1.2",
+		"wrangler": "^4.80.0"
 	}
 }
