@@ -11,11 +11,13 @@ describe('Primal cache worker (integration)', () => {
 		MockPrimalWebSocket.recordedSends = [];
 		MockPrimalWebSocket.scenario = 'success';
 		MockPrimalWebSocket.scenarioByUrl = null;
+		MockPrimalWebSocket.messagesByUrl = null;
 		vi.stubGlobal('WebSocket', MockPrimalWebSocket);
 	});
 
 	afterEach(() => {
 		MockPrimalWebSocket.scenarioByUrl = null;
+		MockPrimalWebSocket.messagesByUrl = null;
 		vi.unstubAllGlobals();
 	});
 

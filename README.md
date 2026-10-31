@@ -1,11 +1,12 @@
 # Primal Cache WebSocket Worker
 
-A Cloudflare Worker that acts as a proxy to Primal Cache WebSocket endpoints, providing a simple HTTP POST interface to interact with the Primal Nostr cache.
+A Cloudflare Worker that gives SmartFlowSocial an HTTP POST cache API. It reads NostrMash first and falls back to Primal Cache, and always returns Primal `EVENT` frames.
 
 ## Features
 
-- HTTP POST interface for WebSocket-based Primal cache queries
-- Automatic failover across multiple Primal cache endpoints
+- HTTP POST interface for cache queries
+- Native NostrMash reads for profiles, profile batches, events, and zap-free threads, translated back into Primal `EVENT` frames
+- Fallback to the NostrMash Primal WebSocket compatibility socket, then to Primal Cache
 - CORS support for browser-based applications
 - Support for 80+ Primal cache request types
 - Automatic connection retry with timeout handling
@@ -778,11 +779,17 @@ The last message is always `["EOSE", "subscription-id"]` indicating "End Of Stor
 - `400` - Bad request (invalid JSON, validation / unknown `requestType`, etc.)
 - `405` - Method not allowed (only POST is accepted)
 - `413` - Request body larger than 256 KiB
-- `502` - Bad gateway (upstream Primal cache error, malformed upstream payload, or all endpoints failed with non-timeout errors)
+- `502` - Bad gateway (upstream error, malformed upstream payload, or all endpoints failed with non-timeout errors)
 - `504` - Gateway timeout (connect or response timeout on every attempted endpoint)
 - `500` - Unexpected internal error
 
 Responses include an `X-Request-Id` header (echoed from the client `X-Request-Id` when valid, otherwise generated) for log correlation.
+
+Successful responses also include `X-Cache-Source`:
+
+- `nostrmash-native` — NostrMash `/api/v1`, reshaped into Primal `EVENT` / `EOSE` frames
+- `nostrmash-ws` — NostrMash `wss://…/primal/ws/v1`
+- `primal` — a Primal cache socket
 
 ### Error Response Format
 
@@ -794,16 +801,17 @@ Responses include an `X-Request-Id` header (echoed from the client `X-Request-Id
 
 Supported Primal `requestType` values are maintained in `src/data/primal-request-types.json` (validated before any upstream WebSocket is opened).
 
-## WebSocket Endpoints
+## Upstream order
 
-The worker automatically tries these Primal cache endpoints in order:
+For each POST, the worker tries:
 
-1. `wss://primal.ytstr.com/v1`
-2. `wss://cache.smartflowsocial.com/v1`
-3. `wss://cache1.primal.net/v1`
-4. `wss://cache2.primal.net/v1`
+1. **NostrMash native HTTP** (`NOSTRMASH_HTTP_BASE`, default `https://api.nostrmash.com`) for `user_profile`, `user_infos`, `events`, and `thread_view`. The JSON is translated into the same `EVENT` / `EOSE` array SmartFlowSocial already parses. A thread with zap receipts is not answered here, because `/api/v1/threads` does not include kind `9735` receipts.
+2. **NostrMash WebSocket compatibility** (`NOSTRMASH_WS_URL`, default `wss://api.nostrmash.com/primal/ws/v1`). This is the Primal iOS cache protocol. The older `/primal/ws` socket is not used: its profile payload is not a kind `0` event.
+3. **Primal Cache**, in order: `wss://cache.smartflowsocial.com/v1`, `wss://cache1.primal.net/v1`, `wss://cache2.primal.net/v1`.
 
-If one fails, it automatically tries the next one with a 7-second timeout per endpoint.
+A tier is skipped when it is unreachable, returns an error, or returns no events SmartFlowSocial can use. `event_actions` stays on Primal unless a tier returns events of the requested kind. NostrMash answers that call with profile metadata, which would hide likes and reposts.
+
+Each socket uses a 3-second connect timeout and a 5-second response timeout. Native HTTP calls use a 2-second timeout (2.5 seconds for threads).
 
 ## CORS Support
 
@@ -812,7 +820,7 @@ The worker includes CORS headers allowing requests from any origin:
 - `Access-Control-Allow-Origin: *`
 - `Access-Control-Allow-Methods: GET, POST, OPTIONS`
 - `Access-Control-Allow-Headers: Content-Type, X-Request-Id`
-- `Access-Control-Expose-Headers: X-Request-Id`
+- `Access-Control-Expose-Headers: X-Request-Id, X-Cache-Source`
 
 ## Development
 
@@ -838,7 +846,10 @@ Runs Prettier (check), ESLint, TypeScript, `cf-types:check`, and Vitest. After c
 ```
 .
 ├── src/
-│   ├── index.ts                 # Worker fetch handler
+│   ├── index.ts                 # Worker fetch handler and upstream chain
+│   ├── native-nostrmash.ts      # NostrMash `/api/v1` translation
+│   ├── cache-socket.ts          # One Primal-style cache WebSocket call
+│   ├── frames.ts                # EVENT frame helpers
 │   ├── body-schema.ts           # Zod validation for POST JSON
 │   ├── http-error.ts            # Typed HTTP errors
 │   ├── request-types.ts         # Loads allowlist JSON

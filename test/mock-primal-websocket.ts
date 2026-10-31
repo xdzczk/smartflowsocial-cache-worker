@@ -19,6 +19,9 @@ export class MockPrimalWebSocket {
 	/** Raw strings passed to `send()` (Primal wire JSON), most recent last. */
 	static recordedSends: string[] = [];
 
+	/** When set, a return value replaces the default success EVENT/EOSE pair for that URL. */
+	static messagesByUrl: ((url: string) => unknown[][] | undefined) | null = null;
+
 	static instances: MockPrimalWebSocket[] = [];
 	readonly url: string;
 	onopen: (() => void) | null = null;
@@ -67,7 +70,7 @@ export class MockPrimalWebSocket {
 				return;
 			}
 
-			const messages: unknown[][] = [
+			const messages: unknown[][] = MockPrimalWebSocket.messagesByUrl?.(this.url) ?? [
 				['EVENT', 'sub', { id: 'mock-event' }],
 				['EOSE', 'sub'],
 			];

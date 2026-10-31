@@ -1,17 +1,30 @@
 import { postBodySchema } from './body-schema';
+import { queryCacheSocket } from './cache-socket';
+import { isUsableCachePayload } from './frames';
+import type { CacheSource } from './frames';
 import { WorkerHttpError } from './http-error';
-import { NO_PARAMS_TYPES } from './request-types';
+import { queryNativeNostrMash } from './native-nostrmash';
 
 const MAX_BODY_BYTES = 256 * 1024;
 
-const WS_ENDPOINTS = [
+const DEFAULT_NOSTRMASH_HTTP = 'https://api.nostrmash.com';
+const DEFAULT_NOSTRMASH_WS = 'wss://api.nostrmash.com/primal/ws/v1';
+
+const PRIMAL_WS_ENDPOINTS = [
 	'wss://cache.smartflowsocial.com/v1',
 	'wss://cache1.primal.net/v1',
 	'wss://cache2.primal.net/v1',
 ] as const;
 
-const CONNECT_TIMEOUT_MS = 3000;
-const RESPONSE_TIMEOUT_MS = 5000;
+function nostrmashHttpBase(env: Env): string {
+	const configured = env.NOSTRMASH_HTTP_BASE?.trim();
+	return configured && configured.length > 0 ? configured : DEFAULT_NOSTRMASH_HTTP;
+}
+
+function nostrmashWsUrl(env: Env): string {
+	const configured = env.NOSTRMASH_WS_URL?.trim();
+	return configured && configured.length > 0 ? configured : DEFAULT_NOSTRMASH_WS;
+}
 
 function getTraceId(request: Request): string {
 	const raw = request.headers.get('x-request-id')?.trim();
@@ -26,7 +39,7 @@ function corsHeaders(traceId: string): Record<string, string> {
 		'Access-Control-Allow-Origin': '*',
 		'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 		'Access-Control-Allow-Headers': 'Content-Type, X-Request-Id',
-		'Access-Control-Expose-Headers': 'X-Request-Id',
+		'Access-Control-Expose-Headers': 'X-Request-Id, X-Cache-Source',
 		'X-Request-Id': traceId,
 	};
 }
@@ -60,171 +73,70 @@ async function readBodyWithLimit(
 	return buf;
 }
 
-function wireCommand(msg: unknown): string | undefined {
-	if (!Array.isArray(msg) || msg.length < 1) return undefined;
-	const row = msg as unknown[];
-	const cmd = row[0];
-	return typeof cmd === 'string' ? cmd : undefined;
-}
-
-function isNoticeError(msg: unknown): boolean {
-	if (!Array.isArray(msg) || msg.length < 3) return false;
-	const row = msg as unknown[];
-	return row[0] === 'NOTICE' && row[2] === 'error';
-}
-
-async function connectToPrimalCache(
+async function loadCache(
+	env: Env,
 	requestType: string,
 	params: Record<string, unknown> | undefined,
 	traceId: string,
-): Promise<unknown[]> {
+	skipNative: boolean,
+): Promise<{ messages: unknown[]; source: CacheSource }> {
+	const startedAt = Date.now();
+	const httpBase = nostrmashHttpBase(env);
+	if (skipNative) {
+		console.log('Skipping NostrMash native tier', { traceId, requestType });
+	}
+	try {
+		const native = skipNative
+			? null
+			: await queryNativeNostrMash(httpBase, requestType, params, traceId);
+		if (native && isUsableCachePayload(requestType, params, native)) {
+			console.log('Cache upstream selected', {
+				traceId,
+				requestType,
+				source: 'nostrmash-native',
+				durationMs: Date.now() - startedAt,
+			});
+			return { messages: native, source: 'nostrmash-native' };
+		}
+	} catch (err) {
+		console.warn('NostrMash native lookup failed', {
+			traceId,
+			requestType,
+			error: err instanceof Error ? err.message : String(err),
+		});
+	}
+
+	const endpoints = [nostrmashWsUrl(env), ...PRIMAL_WS_ENDPOINTS];
 	const failures: WorkerHttpError[] = [];
 
-	for (let i = 0; i < WS_ENDPOINTS.length; i++) {
-		const endpoint = WS_ENDPOINTS[i]!;
-		const wsRequestId = Math.random().toString(36).substring(2, 12);
-
+	for (const endpoint of endpoints) {
 		try {
-			const startedAt = Date.now();
-			console.log('Primal cache attempt started', { traceId, requestType, endpoint });
-
-			const result = await new Promise<unknown[]>((resolve, reject) => {
-				const ws = new WebSocket(endpoint);
-				const responses: unknown[] = [];
-
-				let settled = false;
-				let opened = false;
-				let connectTimer: ReturnType<typeof setTimeout> | null = null;
-				let responseTimer: ReturnType<typeof setTimeout> | null = null;
-
-				const cleanup = () => {
-					if (connectTimer) clearTimeout(connectTimer);
-					if (responseTimer) clearTimeout(responseTimer);
-					try {
-						ws.close();
-					} catch {
-						/* ignore close errors */
-					}
-				};
-
-				const failHttp = (status: 502 | 504, message: string) => {
-					if (settled) return;
-					settled = true;
-					cleanup();
-					reject(new WorkerHttpError(status, message, traceId));
-				};
-
-				const succeed = (value: unknown[]) => {
-					if (settled) return;
-					settled = true;
-					cleanup();
-					resolve(value);
-				};
-
-				connectTimer = setTimeout(() => {
-					console.warn('Primal cache connect timeout', { traceId, requestType, endpoint });
-					failHttp(504, `WebSocket connect timeout to ${endpoint}`);
-				}, CONNECT_TIMEOUT_MS);
-
-				ws.addEventListener('open', () => {
-					opened = true;
-					if (connectTimer) clearTimeout(connectTimer);
-
-					console.log('Primal cache socket opened', { traceId, requestType, endpoint });
-
-					responseTimer = setTimeout(() => {
-						console.warn('Primal cache response timeout', { traceId, requestType, endpoint });
-						failHttp(504, `WebSocket response timeout waiting for EOSE from ${endpoint}`);
-					}, RESPONSE_TIMEOUT_MS);
-
-					const cacheRequest: unknown = NO_PARAMS_TYPES.has(requestType)
-						? ['REQ', wsRequestId, { cache: [requestType] }]
-						: ['REQ', wsRequestId, { cache: [requestType, params ?? {}] }];
-
-					try {
-						ws.send(JSON.stringify(cacheRequest));
-					} catch (err) {
-						failHttp(502, err instanceof Error ? err.message : 'WebSocket send failed');
-					}
+			const messages = await queryCacheSocket(endpoint, requestType, params, traceId);
+			if (!isUsableCachePayload(requestType, params, messages)) {
+				console.warn('Cache payload not usable for this request, trying next', {
+					traceId,
+					requestType,
+					endpoint,
 				});
-
-				ws.addEventListener('message', (event: MessageEvent) => {
-					const raw: unknown = event.data;
-					if (typeof raw !== 'string') {
-						console.error('Primal cache non-text frame', { traceId, requestType, endpoint });
-						failHttp(502, `Non-text WebSocket frame from ${endpoint}`);
-						return;
-					}
-
-					let data: unknown;
-					try {
-						data = JSON.parse(raw) as unknown;
-					} catch {
-						console.error('Primal cache invalid JSON', { traceId, requestType, endpoint });
-						failHttp(502, `Invalid JSON from ${endpoint}`);
-						return;
-					}
-
-					if (!Array.isArray(data)) {
-						failHttp(502, `Unexpected JSON shape from ${endpoint}`);
-						return;
-					}
-
-					responses.push(data);
-
-					if (isNoticeError(data)) {
-						console.warn('Primal cache NOTICE error', { traceId, requestType, endpoint });
-						failHttp(502, `Received NOTICE error from ${endpoint}`);
-						return;
-					}
-
-					if (wireCommand(data) === 'EOSE') {
-						const hasData = responses.some(
-							(r) => wireCommand(r) !== 'EOSE' && wireCommand(r) !== 'NOTICE',
-						);
-						if (!hasData) {
-							failHttp(502, `No data returned from ${endpoint}`);
-							return;
-						}
-
-						console.log('Primal cache success', {
-							traceId,
-							requestType,
-							endpoint,
-							durationMs: Date.now() - startedAt,
-							messageCount: responses.length,
-						});
-
-						succeed(responses);
-					}
-				});
-
-				ws.addEventListener('error', () => {
-					console.warn('Primal cache websocket error', { traceId, requestType, endpoint });
-					failHttp(502, `WebSocket error from ${endpoint}`);
-				});
-
-				ws.addEventListener('close', () => {
-					if (!settled) {
-						console.warn('Primal cache socket closed before completion', {
-							traceId,
-							requestType,
-							endpoint,
-							opened,
-						});
-						failHttp(502, `WebSocket closed before completion from ${endpoint}`);
-					}
-				});
+				failures.push(new WorkerHttpError(502, `Unusable payload from ${endpoint}`, traceId));
+				continue;
+			}
+			const source: CacheSource = endpoint === nostrmashWsUrl(env) ? 'nostrmash-ws' : 'primal';
+			console.log('Cache upstream selected', {
+				traceId,
+				requestType,
+				source,
+				endpoint,
+				durationMs: Date.now() - startedAt,
 			});
-
-			return result;
+			return { messages, source };
 		} catch (err) {
 			const httpErr =
 				err instanceof WorkerHttpError
 					? err
 					: new WorkerHttpError(502, err instanceof Error ? err.message : String(err), traceId);
 			failures.push(httpErr);
-			console.warn('Primal cache endpoint failed, trying next', {
+			console.warn('Cache endpoint failed, trying next', {
 				traceId,
 				requestType,
 				endpoint,
@@ -234,9 +146,9 @@ async function connectToPrimalCache(
 		}
 	}
 
-	const allTimeouts = failures.length > 0 && failures.every((e) => e.status === 504);
+	const allTimeouts = failures.length > 0 && failures.every((failure) => failure.status === 504);
 	const status = allTimeouts ? 504 : 502;
-	console.error('Primal cache all endpoints failed', {
+	console.error('Cache upstreams failed', {
 		traceId,
 		requestType,
 		failures: failures.length,
@@ -245,7 +157,7 @@ async function connectToPrimalCache(
 }
 
 const handler: ExportedHandler<Env> = {
-	async fetch(request): Promise<Response> {
+	async fetch(request, env): Promise<Response> {
 		const traceId = getTraceId(request);
 
 		if (request.method === 'OPTIONS') {
@@ -276,19 +188,20 @@ const handler: ExportedHandler<Env> = {
 			}
 
 			const { requestType, params } = bodyResult.data;
+			const skipNative = request.headers.get('x-cache-skip-native') === '1';
+			const { messages, source } = await loadCache(env, requestType, params, traceId, skipNative);
 
-			const data = await connectToPrimalCache(requestType, params, traceId);
-
-			return new Response(JSON.stringify(data), {
+			return new Response(JSON.stringify(messages), {
 				status: 200,
 				headers: {
 					'Content-Type': 'application/json',
+					'X-Cache-Source': source,
 					...corsHeaders(traceId),
 				},
 			});
 		} catch (error) {
 			if (error instanceof WorkerHttpError) {
-				console.error('Primal cache request failed', {
+				console.error('Cache request failed', {
 					traceId: error.traceId,
 					status: error.status,
 					error: error.message,
@@ -296,7 +209,7 @@ const handler: ExportedHandler<Env> = {
 				return jsonResponse(error.traceId, error.status, { error: error.message });
 			}
 
-			console.error('Primal cache request failed', {
+			console.error('Cache request failed', {
 				traceId,
 				error: error instanceof Error ? error.message : String(error),
 			});
