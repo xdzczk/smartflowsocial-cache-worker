@@ -1,0 +1,40 @@
+=== install ===
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +189
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 189, reused 188, downloaded 0, added 189, done
+
+dependencies:
++ zod 4.6.7
+
+devDependencies:
++ @cloudflare/vitest-pool-workers 0.14.1
++ @eslint/js 9.39.4
++ eslint 9.39.4
++ eslint-config-prettier 10.1.8
++ globals 17.4.0
++ prettier 3.7.4
++ typescript 5.9.3
++ typescript-eslint 8.58.0
++ vitest 4.1.2
++ wrangler 4.80.0
+
+Done in 6.1s using pnpm v10.27.0
+INSTALL_EXIT:0
+
+=== validate ===
+
+> primal-caching-websocket-worker@0.0.0 validate /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker
+> pnpm run format:check && pnpm run lint:ci && pnpm run typecheck && pnpm run cf-types:check && pnpm run test
+
+
+> primal-caching-websocket-worker@0.0.0 format:check /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker
+> prettier --check .
+
+Checking formatting...
+[[33mwarn[39m] .github/workflows/ci-diagnose.yml
+[[33mwarn[39m] Code style issues found in the above file. Run Prettier with --write to fix.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
+VALIDATE_EXIT:1
