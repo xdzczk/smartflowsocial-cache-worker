@@ -1,40 +1,116 @@
 === install ===
 Lockfile is up to date, resolution step is skipped
 Progress: resolved 1, reused 0, downloaded 0, added 0
-Packages: +189
+Packages: +186
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Progress: resolved 189, reused 188, downloaded 0, added 189, done
+Progress: resolved 186, reused 0, downloaded 22, added 4
+Progress: resolved 186, reused 0, downloaded 35, added 8
+Progress: resolved 186, reused 0, downloaded 155, added 78
+Progress: resolved 186, reused 0, downloaded 180, added 85
+Progress: resolved 186, reused 0, downloaded 186, added 186, done
+.../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+.../node_modules/workerd postinstall$ node install.js
+.../node_modules/workerd postinstall$ node install.js
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+.../node_modules/workerd postinstall: Done
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+.../node_modules/workerd postinstall: Done
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
 
 dependencies:
 + zod 4.6.7
 
 devDependencies:
-+ @cloudflare/vitest-pool-workers 0.14.1
-+ @eslint/js 9.39.4
-+ eslint 9.39.4
++ @cloudflare/vitest-pool-workers 0.23.0
++ @eslint/js 10.0.1
++ eslint 10.14.0
 + eslint-config-prettier 10.1.8
-+ globals 17.4.0
-+ prettier 3.7.4
-+ typescript 5.9.3
-+ typescript-eslint 8.58.0
-+ vitest 4.1.2
-+ wrangler 4.80.0
++ globals 17.13.0
++ prettier 3.9.10
++ typescript 7.0.2
++ typescript-eslint 8.72.1
++ vitest 5.0.5
++ wrangler 4.156.0
 
-Done in 6.1s using pnpm v10.27.0
+Done in 7.8s using pnpm v10.27.0
 INSTALL_EXIT:0
 
-=== validate ===
-
-> primal-caching-websocket-worker@0.0.0 validate /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker
-> pnpm run format:check && pnpm run lint:ci && pnpm run typecheck && pnpm run cf-types:check && pnpm run test
-
+=== format ===
 
 > primal-caching-websocket-worker@0.0.0 format:check /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker
 > prettier --check .
 
 Checking formatting...
-[[33mwarn[39m] .github/workflows/ci-diagnose.yml
-[[33mwarn[39m] Code style issues found in the above file. Run Prettier with --write to fix.
- ELIFECYCLE  Command failed with exit code 1.
- ELIFECYCLE  Command failed with exit code 1.
-VALIDATE_EXIT:1
+All matched files use Prettier code style!
+FORMAT_EXIT:0
+
+=== lint ===
+
+> primal-caching-websocket-worker@0.0.0 lint:ci /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker
+> eslint . --max-warnings 0
+
+typescript-eslint does not support TS 7.0.
+Please see https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0 to run typescript-eslint using the TS 6 API.
+See also https://github.com/typescript-eslint/typescript-eslint/issues/10940 for tracking typescript-eslint's support for TS >=7.1
+
+Oops! Something went wrong! :(
+
+ESLint: 10.14.0
+
+Error: typescript-eslint does not support TS 7.0.
+    at Object.<anonymous> (/home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker/node_modules/.pnpm/typescript-eslint@8.72.1_eslint@10.14.0_typescript@7.0.2/node_modules/typescript-eslint/dist/index.js:52:11)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at cjsLoader (node:internal/modules/esm/translators:298:15)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async dynamicImportConfig (/home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker/node_modules/.pnpm/eslint@10.14.0/node_modules/eslint/lib/config/config-loader.js:185:17)
+ ELIFECYCLE  Command failed with exit code 2.
+LINT_EXIT:2
+
+=== type ===
+
+> primal-caching-websocket-worker@0.0.0 typecheck /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker
+> tsc --noEmit
+
+TYPE_EXIT:0
+
+=== test ===
+rc/workers/core/proxy.worker.ts:[2m173:11[22m[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: [vitest-pool]: Failed to start cloudflare-pool worker for test files /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker/test/native-nostrmash.spec.ts.[39m
+[90m [2m❯[22m node_modules/.pnpm/vitest@5.0.5_vite@8.0.3_@emnapi+core@1.9.2_@emnapi+runtime@1.11.3_esbuild@0.27.3_/node_modules/vitest/dist/chunks/index.1TqnEahn.js:[2m5921:94[22m[39m
+[90m [2m❯[22m processTicksAndRejections node:internal/process/task_queues:[2m95:5[22m[39m
+[90m [2m❯[22m Pool.schedule node_modules/.pnpm/vitest@5.0.5_vite@8.0.3_@emnapi+core@1.9.2_@emnapi+runtime@1.11.3_esbuild@0.27.3_/node_modules/vitest/dist/chunks/index.1TqnEahn.js:[2m5921:5[22m[39m
+
+[31m[1mCaused by: SyntaxError[22m: Unexpected identifier 'file'[39m
+[90m [2m❯[22m ProxyServer.fetch node_modules/.pnpm/miniflare@5.20260815.0-alpha/node_modules/miniflare/src/workers/core/proxy.worker.ts:[2m173:11[22m[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: [vitest-pool]: Failed to start cloudflare-pool worker for test files /home/runner/work/smartflowsocial-primal-cache-worker/smartflowsocial-primal-cache-worker/test/integration.spec.ts.[39m
+[90m [2m❯[22m node_modules/.pnpm/vitest@5.0.5_vite@8.0.3_@emnapi+core@1.9.2_@emnapi+runtime@1.11.3_esbuild@0.27.3_/node_modules/vitest/dist/chunks/index.1TqnEahn.js:[2m5921:94[22m[39m
+[90m [2m❯[22m processTicksAndRejections node:internal/process/task_queues:[2m95:5[22m[39m
+[90m [2m❯[22m Pool.schedule node_modules/.pnpm/vitest@5.0.5_vite@8.0.3_@emnapi+core@1.9.2_@emnapi+runtime@1.11.3_esbuild@0.27.3_/node_modules/vitest/dist/chunks/index.1TqnEahn.js:[2m5921:5[22m[39m
+
+[31m[1mCaused by: SyntaxError[22m: Unexpected identifier 'file'[39m
+[90m [2m❯[22m ProxyServer.fetch node_modules/.pnpm/miniflare@5.20260815.0-alpha/node_modules/miniflare/src/workers/core/proxy.worker.ts:[2m173:11[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+
+[2m Test Files [22m [2mno tests[22m
+[2m      Tests [22m [2mno tests[22m
+[2m     Errors [22m [1m[31m3 errors[39m[22m
+[2m   Start at [22m 07:14:18
+[2m   Duration [22m 1.21s
+
+ ELIFECYCLE  Test failed. See above for more details.
+TEST_EXIT:1
