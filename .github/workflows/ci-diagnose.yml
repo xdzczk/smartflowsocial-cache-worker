@@ -1,10 +1,7 @@
 name: CI diagnose
-
 on:
   push:
-    branches:
-      - ci-diagnose
-
+    branches: [ci-diagnose]
 jobs:
   diagnose:
     runs-on: ubuntu-latest
@@ -12,37 +9,53 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
-
+        with:
+          ref: dependabot/npm_and_yarn/development-deps-2333a0981f
       - uses: pnpm/action-setup@v5
         with:
           version: 10.27.0
-
       - uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Capture validate
+      - name: Capture each validate step
         run: |
           set +e
           pnpm install --frozen-lockfile > install.txt 2>&1
           echo "INSTALL_EXIT:$?" >> install.txt
-          pnpm run validate > validate.txt 2>&1
-          echo "VALIDATE_EXIT:$?" >> validate.txt
+          pnpm run format:check > format.txt 2>&1
+          echo "FORMAT_EXIT:$?" >> format.txt
+          pnpm run lint:ci > lint.txt 2>&1
+          echo "LINT_EXIT:$?" >> lint.txt
+          pnpm run typecheck > type.txt 2>&1
+          echo "TYPE_EXIT:$?" >> type.txt
+          pnpm run test > test.txt 2>&1
+          echo "TEST_EXIT:$?" >> test.txt
           {
             echo "=== install ==="
-            tail -c 4000 install.txt
+            tail -c 1500 install.txt
             echo
-            echo "=== validate ==="
-            tail -c 16000 validate.txt
-          } > ci-diagnose.txt
+            echo "=== format ==="
+            tail -c 2500 format.txt
+            echo
+            echo "=== lint ==="
+            tail -c 4000 lint.txt
+            echo
+            echo "=== type ==="
+            tail -c 4000 type.txt
+            echo
+            echo "=== test ==="
+            tail -c 2500 test.txt
+          } > /tmp/ci-diagnose.txt
           exit 0
-
-      - name: Publish the log
+      - name: Publish log on the diagnose branch
         run: |
+          git fetch origin ci-diagnose
+          git checkout ci-diagnose
+          cp /tmp/ci-diagnose.txt ci-diagnose.txt
           git config user.name "xdzczk"
           git config user.email "ivmitko@icloud.com"
           git add ci-diagnose.txt
-          git commit -m "chore: record ci diagnose log"
-          git push
+          git commit -m "chore: record dev dependency validate output"
+          git push origin ci-diagnose
