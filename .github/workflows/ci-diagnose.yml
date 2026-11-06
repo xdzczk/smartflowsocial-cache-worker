@@ -1,0 +1,48 @@
+name: CI diagnose
+
+on:
+  push:
+    branches:
+      - ci-diagnose
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10.27.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Capture validate
+        run: |
+          set +e
+          pnpm install --frozen-lockfile > install.txt 2>&1
+          echo "INSTALL_EXIT:$?" >> install.txt
+          pnpm run validate > validate.txt 2>&1
+          echo "VALIDATE_EXIT:$?" >> validate.txt
+          {
+            echo "=== install ==="
+            tail -c 4000 install.txt
+            echo
+            echo "=== validate ==="
+            tail -c 16000 validate.txt
+          } > ci-diagnose.txt
+          exit 0
+
+      - name: Publish the log
+        run: |
+          git config user.name "xdzczk"
+          git config user.email "ivmitko@icloud.com"
+          git add ci-diagnose.txt
+          git commit -m "chore: record ci diagnose log"
+          git push
