@@ -26,3 +26,7 @@ If `pnpm run test` fails inside Miniflare with a missing export from `@vitest/ex
 ## Request types allowlist
 
 Primal cache `requestType` strings live in `src/data/primal-request-types.json`. Update `noParams` vs `withParams` when Primal adds or changes operations, then run `pnpm run validate`.
+
+## Code of conduct
+
+This project follows the [SmartFlowSocial Code of Conduct](CODE_OF_CONDUCT.md). Report unacceptable behavior to **conduct@smartflow.social**.

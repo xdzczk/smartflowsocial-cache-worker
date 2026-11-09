@@ -1,6 +1,12 @@
-# Primal Cache WebSocket Worker
+# SmartFlowSocial Cache Worker
 
-A Cloudflare Worker that gives SmartFlowSocial an HTTP POST cache API. It reads NostrMash first and falls back to Primal Cache, and always returns Primal `EVENT` frames.
+[![CI](https://github.com/xdzczk/smartflowsocial-cache-worker/actions/workflows/ci.yml/badge.svg)](https://github.com/xdzczk/smartflowsocial-cache-worker/actions/workflows/ci.yml)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue)](LICENSE)
+[![Node 20+](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+
+Primal-compatible cache API for [SmartFlowSocial](https://smartflow.social). A Cloudflare Worker that reads NostrMash first, falls back to Primal Cache, and always returns Primal `EVENT` frames.
+
+Part of SmartFlowSocial. Related pieces: [app](https://github.com/xdzczk/smartflowsocial), [publisher](https://github.com/xdzczk/smartflowsocial-publisher), [Blastr](https://github.com/xdzczk/smartflowsocial-blastr), [Blossom](https://github.com/xdzczk/smartflowsocial-blossom).
 
 ## Features
 
@@ -865,7 +871,7 @@ Runs Prettier (check), ESLint, TypeScript, `cf-types:check`, and Vitest. After c
 
 ## License
 
-MIT
+Released into the public domain under the [Unlicense](LICENSE). This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Report security issues through [SECURITY.md](SECURITY.md).
 
 ## Contributing
 
